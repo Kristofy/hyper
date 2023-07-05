@@ -1,6 +1,7 @@
 #include <array>
 #include <string_view>
 #include <utility>
+#include <algorithm>
 
 #include <stdio.h>
 
@@ -44,10 +45,11 @@ public:
 
 };
 
-template <typename T, T... chars>
-constexpr auto operator""_cts() {
-    return CTString<CTChar<chars>...>{};
-}
+// Not standard compliant, only a part of the GNU extension
+// template <typename T, T... chars>
+// constexpr auto operator""_cts() {
+//     return CTString<CTChar<chars>...>{};
+// }
 
 template <typename ...Chars>
 struct CTStringSliceResult;
@@ -116,6 +118,24 @@ struct CTSlice<Begin, End, CTString<Chars...>> {
 
 };
 
+template<size_t N>
+struct StringLiteral {
+    constexpr StringLiteral(const char (&str)[N]) {
+        std::copy_n(str, N, value);
+    }
+    
+    char value[N];
+};
+
+template<StringLiteral literal, size_t... Idx>
+constexpr auto MakeCTStringHelper(std::index_sequence<Idx...>) {
+    return CTString<CTChar<literal.value[Idx]>...>{};
+}
+
+template<StringLiteral literal>
+constexpr auto MakeCTString() {
+    return MakeCTStringHelper<literal>(std::make_index_sequence<sizeof(literal.value) - 1>{});
+}
 
 // String is an instace of CTString
 
@@ -170,71 +190,7 @@ class CTSeparator {
     using nth_segment = CTSlice<start_after_nth_comma<n>(), end_after_nth_comma<n>(), String>::type;
 };
 
-#define convert(str) str##_cts
-
-#define get_names(...) []() constexpr { \
-    return CTSeparator<decltype(convert(#__VA_ARGS__))>::get_segments(); \
-}() 
-
-// #define TIE(...) []{ \
-// constexpr char arg_str[] = #__VA_ARGS__; \
-// constexpr const unsigned n = countargs(arg_str); \
-// }()
-
-void test() {
-    // constexpr auto arr = CTSeparator(std::string_view("he, hi, ho, asdfd, fsadfsdf, d"));
-    // std::cout << String::size() << std::endl;
-    // constexpr auto arr = CTSeparator<decltype("ha, hi, hu, he, hajaj"_cts)>::get_segments<5>();
-    
-    // std::cout << '|';
-    // for(auto s : arr) std::cout << s << '|';
-    // std::cout << '\n';
-
-    // auto brr = get_names(he, hi, ho, asdfd, fsaddf, d);
-
-
-
-    // constexpr auto k0 = nth_segment<5>(std::string_view("he, hi, ho, asdfd, fsadfsdf, d"));
-    // constexpr auto k1 = end_after_nth_comma<5>(std::string_view("he, hi, ho, asdfd, fsadfsdf, d"));
-    // std::cout << '"' << k0 << '"' << std::endl;
-    // std::cout << '"' << k1 << '"' << std::endl;
-}
-
-
-int main() {    
-    // test();
-
-    // using String = decltype("Hello huhu"_cts);
-    
-    // auto xs = String::value;
-    
-    // std::cout << xs << std::endl;
-
-    // using CutString = typename CTSlice<0, 5, String>::type;
-    // auto cut = CutString::value;
-
-    // std::cout << '"' << cut << '"' << std::endl;
-
-    // size_t k = String::size();
-    constexpr auto arr0 = get_names(ha, hi, hu, he, hajaj);
-    constexpr auto arr1 = get_names(ha, hi, hu, he, hajaj);
-    constexpr auto arr2 = get_names(hi, hu, he);
-
-    for(int i = 0; i < arr0.size(); i++) {
-        puts(arr0[i]);
-        puts(arr1[i]);
-    }
-
-    for(int i = 0; i < arr2.size(); i++) {
-        puts(arr2[i]);
-    }
-
-    return 0;   
-}
-
-
-
-// std::array<std::string_view, countargs(str)> segs = generate_segments(str);
+#define get_names(...) CTSeparator< decltype(MakeCTString<StringLiteral(#__VA_ARGS__)>()) >::get_segments();
 
 
 
