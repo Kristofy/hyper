@@ -9,11 +9,15 @@
  *  It is a template class, so you can use it with any type that has a merge operation with a proper NullElement.
  *  The merge operation does not have to be commutative, but it has to be associative.
  *  The NullElement has to be the identity element of the merge operation.
+ *  The class also implements array ilke access, so you can index into it and even do an update in the assignment
  * 
  *  As for the time complexity:
  *    range query:    O(log n).
  *    single update:  O(log n).
  *    construction:   O(n).
+ * 
+ *    SegmentTree::operator[]: O(1) for access O(log n) for update.
+ *    Range based for loop:    O(n).
  * 
  * As for the space complexity: it is O(n) more precisely 2 * 2 ^ ceil(log2(n)).
  * 
