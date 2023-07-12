@@ -80,7 +80,7 @@ public:
     delete tree;
   }
 
-  DataType query(DataType l, DataType r) {
+  DataType query(size_t l, size_t r) {
     DataType left = NullElement;
     DataType right = NullElement;
     for (l += tree_offset, r += tree_offset; l < r; l >>= 1, r >>= 1) {
@@ -91,7 +91,7 @@ public:
     return Merge(left, right);
   }
 
-  void update(unsigned pos, DataType val) {
+  void update(size_t pos, DataType val) {
     tree[pos += tree_offset] = val;
     while(pos >>= 1) {
       tree[pos] = Merge(tree[pos << 1], tree[pos << 1 | 1]);
